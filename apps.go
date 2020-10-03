@@ -28,6 +28,9 @@ type GDALTranslateOptions struct {
 type GDALWarpAppOptions struct {
 	cval *C.GDALWarpAppOptions
 }
+type GDALInfoOptions struct {
+	cval *C.GDALInfoOptions
+}
 
 func GDALTranslate(
 	destName string,
@@ -94,4 +97,21 @@ func GDALWarp(
 
 	return Dataset{outputDs}
 
+}
+
+func GDALInfo(
+	ds Dataset,
+	options []string,
+) string {
+
+	length := len(options)
+	cOptions := make([]*C.char, length+1)
+	for i := 0; i < length; i++ {
+		cOptions[i] = C.CString(options[i])
+		defer C.free(unsafe.Pointer(cOptions[i]))
+	}
+	cOptions[length] = (*C.char)(unsafe.Pointer(nil))
+
+	gdalInfoOptions := GDALInfoOptions{C.GDALInfoOptionsNew((**C.char)(unsafe.Pointer(&cOptions[0])), nil)}
+	return C.GoString(C.GDALInfo(ds.cval, gdalInfoOptions.cval))
 }
